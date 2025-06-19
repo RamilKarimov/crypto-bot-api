@@ -1,12 +1,17 @@
-
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 import joblib
 import numpy as np
+import hmac
+import hashlib
+import os
 
 app = FastAPI()
+
+# Загрузка модели
 model = joblib.load("model.pkl")
 
+# Модель входных данных
 class InputData(BaseModel):
     rsi: float
     ema50: float
@@ -17,6 +22,7 @@ class InputData(BaseModel):
     bb_lower: float
     bb_width: float
 
+# Эндпоинт для предсказания
 @app.post("/predict")
 async def predict(data: InputData):
     features = [[
@@ -32,13 +38,8 @@ async def predict(data: InputData):
     probability = model.predict_proba(features)[0][1]
     prediction = int(probability >= 0.75)
     return {"prediction": prediction, "probability": round(probability, 4)}
-    from fastapi import FastAPI, Request
-import hmac
-import hashlib
-import os
 
-app = FastAPI()
-
+# Эндпоинт для подписи
 @app.post("/sign")
 async def create_signature(request: Request):
     body = await request.json()
@@ -49,4 +50,3 @@ async def create_signature(request: Request):
 
     signature = hmac.new(secret.encode(), query.encode(), hashlib.sha256).hexdigest()
     return {"signature": signature}
-
