@@ -22,7 +22,22 @@ class InputData(BaseModel):
     bb_lower: float
     bb_width: float
 
-
+# Эндпоинт для предсказания
+@app.post("/predict")
+async def predict(data: InputData):
+    features = [[
+        data.rsi,
+        data.ema50,
+        data.ema200,
+        data.macd,
+        data.macd_signal,
+        data.bb_upper,
+        data.bb_lower,
+        data.bb_width
+    ]]
+    probability = model.predict_proba(features)[0][1]
+    prediction = int(probability >= 0.75)
+    return {"prediction": prediction, "probability": round(probability, 4)}
 
 # Эндпоинт для подписи
 @app.post("/sign")
